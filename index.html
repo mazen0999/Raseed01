@@ -43,7 +43,7 @@ body.locked .app-sidebar,body.locked .topbar,body.locked .shell{display:none}
 <div class="auth-tabs"><button type="button" id="tabIn" class="on">تسجيل الدخول</button><button type="button" id="tabUp">حساب جديد</button></div>
 <form id="authForm" onsubmit="return false"><div class="field"><label for="authEmail">البريد الإلكتروني</label><input id="authEmail" type="email" autocomplete="email" required style="direction:ltr"></div>
 <div class="field"><label for="authPass">كلمة المرور <small>8 أحرف على الأقل</small></label><input id="authPass" type="password" minlength="8" autocomplete="current-password" required style="direction:ltr"></div>
-<div class="auth-msg" id="authMsg" role="alert"></div><button class="primary-btn" id="authSubmit" type="submit">دخول <span>←</span></button></form></div></div>
+<div class="auth-msg" id="authMsg" role="alert"></div><button class="primary-btn" id="authSubmit" type="submit">دخول <span>←</span></button></form><div id="authDiag" style="margin-top:12px;font-size:11px;color:#7a8a85;text-align:center;direction:rtl">الإصدار 3.1.1 · لم يبدأ تشغيل الصفحة بعد</div></div></div>
 <aside class="app-sidebar" id="appSidebar" aria-label="القائمة الرئيسية">
   <div class="sidebar-brand"><div class="brandmark">إ</div><div><strong>إحكام</strong><small>Precision · مساحة إدارة المحافظ</small></div></div>
   <button class="sidebar-new" type="button" data-go="#transactionSection"><span>＋</span> تسجيل عملية جديدة</button>
@@ -164,13 +164,20 @@ render();
 
 
 
+<script>
+window.__diag=t=>{const d=document.getElementById('authDiag');if(d)d.textContent='الإصدار 3.1.1 · '+t};
+window.addEventListener('error',e=>{const m=document.getElementById('authMsg');if(m)m.textContent='خطأ في الصفحة: '+(e.message||'غير معروف')});
+window.addEventListener('unhandledrejection',e=>{const m=document.getElementById('authMsg');if(m)m.textContent='خطأ: '+((e.reason&&e.reason.message)||e.reason||'غير معروف')});
+window.__diag('جارٍ تحميل مكتبة الاتصال…');
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"><\/script>')</script>
 <script>window.supabase||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.45.4/supabase.min.js"><\/script>')</script>
 <script>
 if(!window.supabase){const m=document.getElementById('authMsg');m.textContent='تعذر تحميل مكتبة الاتصال بالخادم. عطّل مانع الإعلانات أو جرّب شبكة أو متصفحًا آخر ثم أعد تحميل الصفحة.';document.getElementById('authForm').addEventListener('submit',e=>{e.preventDefault()});throw new Error('supabase library missing')}
-window.addEventListener('error',e=>{const m=document.getElementById('authMsg');if(m&&!m.textContent)m.textContent='حدث خطأ في الصفحة: '+(e.message||'')});
-const APP_VERSION='3.1.0';
+const APP_VERSION='3.1.1';
+__diag('المكتبة محمّلة · جارٍ فحص الاتصال بالخادم…');
+(async()=>{try{const c=new AbortController(),t=setTimeout(()=>c.abort(),8000);const r=await fetch('https://kugmunqhaqhtpbxvqtlo.supabase.co/auth/v1/health',{headers:{apikey:'sb_publishable_OOXEBtT9X-ss01dh6Nua-w_Ai_V6epy'},signal:c.signal});clearTimeout(t);__diag(r.ok?'الاتصال بالخادم سليم ✓':'الخادم رد بخطأ '+r.status)}catch(e){__diag('تعذر الوصول إلى خادم Supabase — قد تكون شبكتك تحجبه، جرّب شبكة أخرى أو VPN')}})();
 const SB_URL='https://kugmunqhaqhtpbxvqtlo.supabase.co',SB_KEY='sb_publishable_OOXEBtT9X-ss01dh6Nua-w_Ai_V6epy';
 const sb=supabase.createClient(SB_URL,SB_KEY);
 const cloud={uid:null,email:'',tx:{},settings:'',timer:null,busy:false,admin:false,cfg:{}};
@@ -180,10 +187,10 @@ function setSync(t,sub,color){const tag=document.querySelector('.local-tag');if(
  const f=$('footNote');if(f)f.textContent=sub;const sb2=document.querySelector('.sidebar-bottom div');if(sb2){sb2.querySelector('strong').textContent=t;sb2.querySelector('small').textContent=sub}}
 $('tabIn').onclick=()=>setMode('in');$('tabUp').onclick=()=>setMode('up');
 function setMode(m){authMode=m;$('tabIn').classList.toggle('on',m==='in');$('tabUp').classList.toggle('on',m==='up');$('authSubmit').firstChild.textContent=m==='in'?'دخول ':'إنشاء الحساب ';$('authPass').autocomplete=m==='in'?'current-password':'new-password';setMsg('')}
-$('authForm').onsubmit=async e=>{e.preventDefault();setMsg('');const email=$('authEmail').value.trim(),password=$('authPass').value;$('authSubmit').disabled=true;
- try{if(authMode==='in'){const{error}=await sb.auth.signInWithPassword({email,password});if(error)throw error}
- else{const{data:d,error}=await sb.auth.signUp({email,password});if(error)throw error;if(!d.session)setMsg('تم إنشاء الحساب. افتح رسالة التفعيل المرسلة إلى بريدك ثم سجّل الدخول.',true)}}
- catch(err){const m=String(err.message||'');setMsg(/Invalid login/i.test(m)?'البريد أو كلمة المرور غير صحيحة':/already registered/i.test(m)?'هذا البريد مسجل بالفعل':/Email not confirmed/i.test(m)?'فعّل بريدك أولًا من الرسالة المرسلة إليك':/password/i.test(m)?'كلمة المرور ضعيفة أو أقصر من 8 أحرف':'تعذر إتمام العملية، حاول مرة أخرى')}
+$('authForm').onsubmit=async e=>{e.preventDefault();setMsg('');const email=$('authEmail').value.trim(),password=$('authPass').value;$('authSubmit').disabled=true;setMsg('جارٍ التنفيذ…',true);const T=p=>Promise.race([p,new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),15000))]);
+ try{if(authMode==='in'){const{error}=await T(sb.auth.signInWithPassword({email,password}));if(error)throw error;setMsg('')}
+ else{const{data:d,error}=await T(sb.auth.signUp({email,password}));if(error)throw error;if(d.session)setMsg('');else setMsg('تم إنشاء الحساب. افتح رسالة التفعيل المرسلة إلى بريدك ثم سجّل الدخول.',true)}}
+ catch(err){const m=String(err.message||'');setMsg(/timeout/i.test(m)||/fetch/i.test(m)?'الخادم لا يستجيب. تحقق من الإنترنت أو جرّب شبكة أخرى.':/rate limit/i.test(m)?'تم تجاوز حد الرسائل مؤقتًا، حاول بعد قليل أو عطّل تفعيل البريد من إعدادات Supabase.':/Invalid login/i.test(m)?'البريد أو كلمة المرور غير صحيحة':/already registered/i.test(m)?'هذا البريد مسجل بالفعل':/Email not confirmed/i.test(m)?'فعّل بريدك أولًا من الرسالة المرسلة إليك':/password/i.test(m)?'كلمة المرور ضعيفة أو أقصر من 8 أحرف':'تعذر إتمام العملية: '+m)}
  $('authSubmit').disabled=false};
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut()};
 const toRow=t=>({id:t.id,wallet:t.wallet,kind:t.kind,amount:r2(t.amount),commission:r2(t.commission||0),tx_date:t.date,tx_time:String(t.time||'00:00').length===5?t.time+':00':t.time,details:t.details||'',reference:t.reference||''});
