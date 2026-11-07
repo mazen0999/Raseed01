@@ -41,7 +41,7 @@ body.locked .app-sidebar,body.locked .topbar,body.locked .shell{display:none}
 </style></head>
 <body class="locked"><div id="authGate"><div class="auth-card"><div class="brand"><div class="brandmark">إ</div><div><strong>إحكام</strong><small>Precision · إدارة المحافظ</small></div></div>
 <div class="auth-tabs"><button type="button" id="tabIn" class="on">تسجيل الدخول</button><button type="button" id="tabUp">حساب جديد</button></div>
-<form id="authForm"><div class="field"><label for="authEmail">البريد الإلكتروني</label><input id="authEmail" type="email" autocomplete="email" required style="direction:ltr"></div>
+<form id="authForm" onsubmit="return false"><div class="field"><label for="authEmail">البريد الإلكتروني</label><input id="authEmail" type="email" autocomplete="email" required style="direction:ltr"></div>
 <div class="field"><label for="authPass">كلمة المرور <small>8 أحرف على الأقل</small></label><input id="authPass" type="password" minlength="8" autocomplete="current-password" required style="direction:ltr"></div>
 <div class="auth-msg" id="authMsg" role="alert"></div><button class="primary-btn" id="authSubmit" type="submit">دخول <span>←</span></button></form></div></div>
 <aside class="app-sidebar" id="appSidebar" aria-label="القائمة الرئيسية">
@@ -165,7 +165,11 @@ render();
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"><\/script>')</script>
+<script>window.supabase||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.45.4/supabase.min.js"><\/script>')</script>
 <script>
+if(!window.supabase){const m=document.getElementById('authMsg');m.textContent='تعذر تحميل مكتبة الاتصال بالخادم. عطّل مانع الإعلانات أو جرّب شبكة أو متصفحًا آخر ثم أعد تحميل الصفحة.';document.getElementById('authForm').addEventListener('submit',e=>{e.preventDefault()});throw new Error('supabase library missing')}
+window.addEventListener('error',e=>{const m=document.getElementById('authMsg');if(m&&!m.textContent)m.textContent='حدث خطأ في الصفحة: '+(e.message||'')});
 const APP_VERSION='3.1.0';
 const SB_URL='https://kugmunqhaqhtpbxvqtlo.supabase.co',SB_KEY='sb_publishable_OOXEBtT9X-ss01dh6Nua-w_Ai_V6epy';
 const sb=supabase.createClient(SB_URL,SB_KEY);
